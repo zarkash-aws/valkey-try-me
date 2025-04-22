@@ -134,7 +134,7 @@
 
     <script>
         "use strict";
-        const FILE_URL = "../7.2.8/state/state.bin.gz";  // Path to the .gz file
+        const FILE_URL = "../8.1.0/states/state.bin.gz";  // Path to the .gz file
         const CACHE_KEY = "valkey_binary_cache";
         const LAST_MODIFIED_KEY = "valkey_last_modified";
         let emulator;
@@ -242,8 +242,8 @@
                 memory_size: 512 * 1024 * 1024,
                 bios: { url: "../vos/v86/bios/seabios.bin" },
                 filesystem: {
-                    baseurl: "../7.2.8/fs/alpine-rootfs-flat",
-                    basefs: "../7.2.8/fs/alpine-fs.json",
+                    baseurl: "../8.1.0/fs/alpine-rootfs-flat",
+                    basefs: "../8.1.0/fs/alpine-fs.json",
                 },
                 autostart: true,
                 bzimage_initrd_from_filesystem: true,
