@@ -3,15 +3,36 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-IMAGES=../fs
-OUT_ROOTFS_TAR="$IMAGES"/alpine-rootfs.tar
-OUT_ROOTFS_FLAT="$IMAGES"/alpine-rootfs-flat
-OUT_FSJSON="$IMAGES"/alpine-fs.json
-CONTAINER_NAME=alpine-v86
-IMAGE_NAME=i386/alpine-v86
+# =================================
+# Configuration 
+# =================================
 
-mkdir -p "$IMAGES"
-docker build . --platform linux/386 --rm --tag "$IMAGE_NAME"
+# Change to required version
+VALKEY_VERSION=8.1.0
+VALKEY_DOWNLOAD_URL=https://github.com/valkey-io/valkey/archive/refs/tags/8.1.0.tar.gz
+VALKEY_DOWNLOAD_SHA="559274e81049326251fa5b1e1c64d46d3d4d605a691481e0819133ca1f1db44f"
+
+# =================================
+# Build
+# =================================
+
+OUT_DIR=../$VALKEY_VERSION/fs
+OUT_ROOTFS_TAR="$OUT_DIR"/alpine-rootfs.tar
+OUT_ROOTFS_FLAT="$OUT_DIR"/alpine-rootfs-flat
+OUT_FSJSON="$OUT_DIR"/alpine-fs.json
+CONTAINER_NAME=alpine-v86-$VALKEY_VERSION
+IMAGE_NAME=i386/alpine-v86-$VALKEY_VERSION
+
+# Path to the versions.json file
+VERSIONS_FILE="../versions.json"
+
+mkdir -p "$OUT_DIR"
+mkdir -p "../$VALKEY_VERSION/states"
+docker build . --platform linux/386 --rm --tag "$IMAGE_NAME" \
+    --build-arg VALKEY_VERSION="${VALKEY_VERSION}" \
+    --build-arg VALKEY_DOWNLOAD_URL="${VALKEY_DOWNLOAD_URL}" \
+    --build-arg VALKEY_DOWNLOAD_SHA="${VALKEY_DOWNLOAD_SHA}"
+
 docker rm "$CONTAINER_NAME" || true
 docker create --platform linux/386 -t -i --name "$CONTAINER_NAME" "$IMAGE_NAME"
 

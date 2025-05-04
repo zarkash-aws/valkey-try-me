@@ -6,12 +6,13 @@
     <title>TryValkey</title>
 
     <!-- Scripts -->
-    <script src="../vos/v86/libv86.js"></script>
-    <script src="../vos/xterm/xterm.min.js"></script>
-    <script src="../vos/pako/pako.min.js"></script>
-    <script src="../vos/v86/serial_xterm.js"></script>
+    <script src="https://dtq9kvai1345o.cloudfront.net/vos/v86/libv86.js"></script>
+    <script src="https://dtq9kvai1345o.cloudfront.net/vos/xterm/xterm.min.js"></script>
+    <script src="https://dtq9kvai1345o.cloudfront.net/vos/pako/pako.min.js"></script>
+    <script src="https://dtq9kvai1345o.cloudfront.net/vos/v86/serial_xterm.js"></script>
+    
     <!-- Styles -->
-    <link rel="stylesheet" href="../vos/xterm/xterm.css" />
+    <link rel="stylesheet" href="https://dtq9kvai1345o.cloudfront.net/vos/xterm/xterm.css" />
     <link rel="stylesheet" href='https://fonts.googleapis.com/css?family=Open Sans'>
 
     <style>
@@ -134,7 +135,7 @@
 
     <script>
         "use strict";
-        const FILE_URL = "../8.1.0/states/state.bin.gz";  // Path to the .gz file
+        const FILE_URL = "https://dtq9kvai1345o.cloudfront.net/8.1.0/states/state.bin.gz";  // Path to the .gz file
         const CACHE_KEY = "valkey_binary_cache";
         const LAST_MODIFIED_KEY = "valkey_last_modified";
         let emulator;
@@ -238,12 +239,12 @@
             progressText.innerText = "Starting emulator...";
 
             emulator = new V86({
-                wasm_path: "../vos/v86/v86.wasm",
+                wasm_path: "https://dtq9kvai1345o.cloudfront.net/vos/v86/v86.wasm",
                 memory_size: 512 * 1024 * 1024,
-                bios: { url: "../vos/v86/bios/seabios.bin" },
+                bios: { url: "https://dtq9kvai1345o.cloudfront.net/vos/v86/bios/seabios.bin" },
                 filesystem: {
-                    baseurl: "../8.1.0/fs/alpine-rootfs-flat",
-                    basefs: "../8.1.0/fs/alpine-fs.json",
+                    baseurl: "https://dtq9kvai1345o.cloudfront.net/8.1.0/fs/alpine-rootfs-flat",
+                    basefs: "https://dtq9kvai1345o.cloudfront.net/8.1.0/fs/alpine-fs.json",
                 },
                 autostart: true,
                 bzimage_initrd_from_filesystem: true,

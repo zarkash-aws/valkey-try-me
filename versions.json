@@ -1,1 +1,18 @@
-["8.0.1", "7.2.8", "8.1.0"]
+{
+    "7.2.8": {
+        "baseurl": "https://dtq9kvai1345o.cloudfront.net/7.2.8/fs/alpine-rootfs-flat",
+        "basefs": "https://dtq9kvai1345o.cloudfront.net/7.2.8/fs/alpine-fs.json",
+        "state":"https://dtq9kvai1345o.cloudfront.net/7.2.8/states/state.bin.gz"
+    },
+    "8.0.1": {
+        "baseurl": "https://dtq9kvai1345o.cloudfront.net/8.0.1/fs/alpine-rootfs-flat",
+        "basefs": "https://dtq9kvai1345o.cloudfront.net/8.0.1/fs/alpine-fs.json",
+        "state":"https://dtq9kvai1345o.cloudfront.net/8.0.1/states/state.bin.gz"
+    },
+    "8.1.0": {
+        "baseurl": "https://dtq9kvai1345o.cloudfront.net/8.1.0/fs/alpine-rootfs-flat",
+        "basefs": "https://dtq9kvai1345o.cloudfront.net/8.1.0/fs/alpine-fs.json",
+        "state":"https://dtq9kvai1345o.cloudfront.net/8.1.0/states/state.bin.gz"
+      }
+  }
+  

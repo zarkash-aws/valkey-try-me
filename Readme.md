@@ -1,12 +1,8 @@
 # Try-Valkey Images
 
-This repository provides tools, instructions, and necessary binary files for creating and running custom images for the [Try-Valkey](https://zarkash-aws.github.io/try-valkey.github.io) project. The emulator operates on a 32-bit Alpine Linux base, ensuring a lightweight and efficient environment. The images include the Valkey server and CLI, prepared for booting with all necessary configurations.
-
-This repository integrates two functionalities:
-1. **Image Creation Tools:** Tools and scripts for building and customizing Valkey images.
-2. **Binary Image Storage:** Pre-built binary files for different Valkey versions, structured for easy use.
-
+This repository provides tools and instructions for creating and running custom images for the Try Valkey project. The emulator operates on a 32-bit Alpine Linux base, ensuring a lightweight and efficient environment. The images include the Valkey server and CLI, prepared for booting with all necessary configurations.
 This project is based on the [v86 project](https://github.com/copy/v86). Users seeking additional customization options or expanded emulator support should refer to the v86 repository.
+This repository contains tools and scripts for building and customizing Valkey images.
 
 ---
 
@@ -15,19 +11,13 @@ This project is based on the [v86 project](https://github.com/copy/v86). Users s
 ### Image Creation Tools
 - **src:** Contains files required to build a filesystem that includes Valkey, fully configured and ready to run.
 - **utils:** Provides debugging tools and utilities to modify the image, save states, and make additional customizations.
-
-- **vos:** Houses files needed to execute the image in a browser environment, organized into:
-  - **v86:** JavaScript and binary files necessary for running the v86 emulator.
-  - **xterm:** Resources for UI/UX integration with terminal emulation.
-- **example:** A working example demonstrating how to use the binary files. 
+- **example:** A working example demonstrating how to use the saved states. 
 ### Binary Image Storage
-Each version of Try-Valkey has its own directory, named according to its version tag, containing:
-- **fs:** Stores the generated binary filesystem files, including configurations and boot information.
-- **state:** Contains compressed binary files representing a booted state of the system.
+- Prebuilt filesystems and state binaries are hosted on a CDN. The relevant URLs are listed in versions.json.
 
 ---
 
-## Creating and Customizing an Image
+## Creating Filesystem and State from Scratch
 
 ### Prerequisites
 
@@ -42,7 +32,7 @@ If Docker is not installed, refer to the installation guides for your operating 
 - [Docker Desktop installation guide](https://docs.docker.com/desktop/) (macOS and Windows)
 - [Docker Engine installation guide](https://docs.docker.com/engine/install/) (Linux and other OS)
 
-### Steps
+###  Steps
 1. **Update the Build Script**
    - Modify `src/build.sh` to match the desired Valkey version:
    
@@ -63,16 +53,23 @@ If Docker is not installed, refer to the installation guides for your operating 
    - The generated filesystem will be saved in the `<version-tag>/fs` directory.
 
 3. **Open the Image Creator Tool**
-   - Open `utils/image_creator.html` in your browser:
-        - in terminal:
-           ```bash
-           cd ..
-           python3 -m http.server 8888
-            ```
-        - in web browser, navigate to http://localhost:8888/utils/image_creator.html
-   - Wait for the boot process to complete. You'll know it's finished when data appears in the server log.
-   - Make modifications to the image (e.g., loading keys, editing state via CLI or VM terminal).
-   - Click **"Save State"** to download a binary file of the current state.
+   In `utils/image_creator.html`, set: 
+   ```js
+   baseurl: "../<version-tag>/fs/alpine-rootfs-flat", 
+   basefs: "../<version-tag>/fs/alpine-fs.json"
+   ```
+   Replace <version-tag> with your actual version directory.
+
+   Then, run a local server:
+   
+      ```bash
+      cd ..
+      python3 -m http.server 8888
+      ```
+   In web browser, navigate to http://localhost:8888/utils/image_creator.html.
+   Wait for the boot process to complete. You'll know it's finished when data appears in the server log.
+   Modify the image as needed (e.g., loading keys, editing state via CLI or VM terminal).
+   Click **"Save State"** to download a binary file of the current state.
 
 4. **Compress the Binary File**
    
@@ -81,6 +78,40 @@ If Docker is not installed, refer to the installation guides for your operating 
    ```
    This ensures compatibility with the Try-Valkey page.
    After compressing, move the compressed state file to the `<version-tag>/state` directory. 
+   ```bash
+    mv <state_file_name>.gz <version-tag>/state/
+   ```
 
+---
 
+## Creating a New State from an Existing Filesystem
+If a filesystem for your desired version already exists in versions.json, follow these steps:
+1. Set `baseurl` and `basefs` in `utils/image_creator.html` using values from `versions.json`:
+   ```js
+   baseurl: "<baseurl path from versions.json>"
+   basefs: "<basefs path from versions.json>"
+   ```
+2. Then, run a local server:
+   
+      ```bash
+      cd ..
+      python3 -m http.server 8888
+      ```
+   In web browser, navigate to http://localhost:8888/utils/image_creator.html.
+   Wait for the boot process to complete. You'll know it's finished when data appears in the server log.
+   Modify the image as needed (e.g., loading keys, editing state via CLI or VM terminal).
+   Click **"Save State"** to download a binary file of the current state.
 
+3. Compress the state binary file that you downloaded in the previous step
+   ```bash
+    gzip <path-to-state-file>
+   ```
+   This ensures compatibility with the Try-Valkey page.
+   After compressing, move the compressed state file to the `<version-tag>/state` directory. 
+
+--- 
+
+## Test Your State
+Use the examples in /example to verify that your saved state works correctly:
+- Update the filesystem and state paths to point to your created versions.
+- Launch and confirm expected behavior in the emulator.
