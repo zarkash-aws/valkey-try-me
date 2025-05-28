@@ -17,9 +17,26 @@ This repository contains tools and scripts for building and customizing Valkey i
 
 ---
 
-## Creating Filesystem and State from Scratch
 
-### Prerequisites
+## 1. Creating a Filesystem and State
+
+You can either build the filesystem from scratch (`MODE="local"`) or use a prebuilt one (`MODE="remote"`).
+
+
+### Option 1: Use a Prebuilt Filesystem (`MODE="remote"`)
+
+If a filesystem for your desired version already exists in versions.json, run: 
+
+   ```bash
+   MODE=remote VALKEY_VERSION=<version-tag> ./src/build.sh
+   ```
+A directory named `<version-tag>/` will be created.
+`image_creator.html` will be generated and automatically configured to use remote CDN URLs from versions.json.
+
+
+### Option 2: Build Filesystem from Scratch (`MODE="local"`)
+
+#### Prerequisites
 
 **Ensure Docker is Installed**
 Verify that Docker is installed and running by executing:
@@ -32,86 +49,50 @@ If Docker is not installed, refer to the installation guides for your operating 
 - [Docker Desktop installation guide](https://docs.docker.com/desktop/) (macOS and Windows)
 - [Docker Engine installation guide](https://docs.docker.com/engine/install/) (Linux and other OS)
 
-###  Steps
-1. **Update the Build Script**
-   - Modify `src/build.sh` to match the desired Valkey version:
-   
+####  Build
+   Run:
    ```bash
-    VALKEY_VERSION=7.2.8
-    VALKEY_DOWNLOAD_URL=https://github.com/valkey-io/valkey/archive/refs/tags/7.2.8.tar.gz
-    VALKEY_DOWNLOAD_SHA="2d990b374b783ba05e0081498718ed0640f84bc60b6db24a4bc069f9775f778c"
+   MODE=local VALKEY_VERSION=<version-tag> \
+   VALKEY_DOWNLOAD_URL=<download_url> \
+   VALKEY_DOWNLOAD_SHA=<download_sha> \
+   ./src/build.sh
    ```
-   - For `VALKEY_DOWNLOAD_URL` and `VALKEY_DOWNLOAD_SHA`, refer to the [Valkey hashes file](https://github.com/valkey-io/valkey-hashes).
+   - For `VALKEY_VERSION`, `VALKEY_DOWNLOAD_URL` and `VALKEY_DOWNLOAD_SHA`, refer to the [Valkey hashes file](https://github.com/valkey-io/valkey-hashes).
 
-2. **Run the Build Script**
-   - This step creates a filesystem that loads the server at boot and the CLI in `ttys0`.
-   
+   for example:
    ```bash
-   cd src
-   ./build.sh
+   MODE=local VALKEY_VERSION=8.1.0 \
+   VALKEY_DOWNLOAD_URL=https://github.com/valkey-io/valkey/archive/refs/tags/8.1.0.tar.gz \
+   VALKEY_DOWNLOAD_SHA=559274e81049326251fa5b1e1c64d46d3d4d605a691481e0819133ca1f1db44f \
+   ./src/build.sh
    ```
-   - The generated filesystem will be saved in the `<version-tag>/fs` directory.
+   A directory named `<version-tag>/` will be created with the generated filesystem and state directories.
+   `image_creator.html` will be generated and preconfigured to use the local paths for the generated filesystem.
 
-3. **Open the Image Creator Tool**
-   In `utils/image_creator.html`, set: 
-   ```js
-   baseurl: "../<version-tag>/fs/alpine-rootfs-flat", 
-   basefs: "../<version-tag>/fs/alpine-fs.json"
-   ```
-   Replace <version-tag> with your actual version directory.
+## **2. Launch the Emulator and Save State**
 
-   Then, run a local server:
+1. Run a local server:
    
       ```bash
       cd ..
       python3 -m http.server 8888
       ```
-   In web browser, navigate to http://localhost:8888/utils/image_creator.html.
+2. In web browser, navigate to http://localhost:8888/utils/image_creator.html.
    Wait for the boot process to complete. You'll know it's finished when data appears in the server log.
-   Modify the image as needed (e.g., loading keys, editing state via CLI or VM terminal).
-   Click **"Save State"** to download a binary file of the current state.
-
-4. **Compress the Binary File**
+3. (optional) Modify the image as needed (e.g., loading keys, editing state via CLI or VM terminal).
+4. Click **"Download State"** to download a binary file of the current state.
+5. Compress the binary state file that was downloaded in the previous step.  
    
    ```bash
-    gzip <state_file_name>
+    gzip <binary_state_file>
    ```
    This ensures compatibility with the Try-Valkey page.
-   After compressing, move the compressed state file to the `<version-tag>/state` directory. 
+6. After compressing, move the compressed state file to the `<version-tag>/state` directory. 
    ```bash
-    mv <state_file_name>.gz <version-tag>/state/
+    mv <binary_state_file>.gz <version-tag>/state/
    ```
 
----
-
-## Creating a New State from an Existing Filesystem
-If a filesystem for your desired version already exists in versions.json, follow these steps:
-1. Set `baseurl` and `basefs` in `utils/image_creator.html` using values from `versions.json`:
-   ```js
-   baseurl: "<baseurl path from versions.json>"
-   basefs: "<basefs path from versions.json>"
-   ```
-2. Then, run a local server:
-   
-      ```bash
-      cd ..
-      python3 -m http.server 8888
-      ```
-   In web browser, navigate to http://localhost:8888/utils/image_creator.html.
-   Wait for the boot process to complete. You'll know it's finished when data appears in the server log.
-   Modify the image as needed (e.g., loading keys, editing state via CLI or VM terminal).
-   Click **"Save State"** to download a binary file of the current state.
-
-3. Compress the state binary file that you downloaded in the previous step
-   ```bash
-    gzip <path-to-state-file>
-   ```
-   This ensures compatibility with the Try-Valkey page.
-   After compressing, move the compressed state file to the `<version-tag>/state` directory. 
-
---- 
-
-## Test Your State
+## (Optional) Test Your State
 Use the examples in /example to verify that your saved state works correctly:
 - Update the filesystem and state paths to point to your created versions.
 - Launch and confirm expected behavior in the emulator.
