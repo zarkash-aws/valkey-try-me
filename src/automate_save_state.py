@@ -12,7 +12,7 @@ from playwright.async_api import async_playwright
 # Configuration
 PORT = 8888
 VALKEY_VERSION = os.getenv('VALKEY_VERSION', '8.1.0')
-TIMEOUT_SECONDS = 300  # 5 minutes max wait for boot
+TIMEOUT_SECONDS = 20 * 60  # 20 minutes max wait for boot
 CHECK_INTERVAL = 2  # Check every 2 seconds
 MAX_STATE_SIZE_MB = 40  # Maximum compressed state size in MB
 
