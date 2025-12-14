@@ -15,6 +15,7 @@ VALKEY_VERSION = os.getenv('VALKEY_VERSION', '8.1.0')
 TIMEOUT_SECONDS = 20 * 60  # 20 minutes max wait for boot
 CHECK_INTERVAL = 2  # Check every 2 seconds
 MAX_STATE_SIZE_MB = 40  # Maximum compressed state size in MB
+RESPONSE_TIMEOUT = 10  # Timeout for waiting for PING response
 
 async def wait_for_boot_complete(page, timeout=TIMEOUT_SECONDS):
     """Wait for boot to complete by checking for server log data"""
@@ -43,7 +44,8 @@ async def test_basic_functionality(page, valkey_version, compressed_state_path):
     """Test basic functionality of the Valkey image"""
     print("\nRunning basic functionality tests...")
     
-    all_tests_passed = True
+    TOTAL_TESTS = 3
+    tests_passed = 0
     
     # Test 1: Check if server log contains version
     print(f"\n1. Testing: Server log contains 'version={valkey_version}'")
@@ -51,13 +53,12 @@ async def test_basic_functionality(page, valkey_version, compressed_state_path):
         log_content = await page.locator('#log-terminal-container').inner_text()
         if f'version={valkey_version}' in log_content:
             print(f"   Version {valkey_version} found in server log")
+            tests_passed += 1
         else:
             print(f"   Version {valkey_version} NOT found in server log")
             print(f"   Log preview: {log_content[:500]}...")
-            all_tests_passed = False
     except Exception as e:
         print(f"   Failed to check server log: {e}")
-        all_tests_passed = False
     
     # Test 2: Send PING and check for PONG response
     print(f"\n2. Testing: PING command responds with PONG")
@@ -73,9 +74,7 @@ async def test_basic_functionality(page, valkey_version, compressed_state_path):
         
         # Wait for response - access xterm.js buffer through serialAdapter
         pong_found = False
-        for attempt in range(10):  # Try for up to 10 seconds
-            await asyncio.sleep(1)
-            
+        for attempt in range(RESPONSE_TIMEOUT):  # Try for up to RESPONSE_TIMEOUT seconds
             try:
                 # Access the xterm.js terminal buffer through the global serialAdapter
                 terminal_text = await page.evaluate('''() => {
@@ -102,43 +101,21 @@ async def test_basic_functionality(page, valkey_version, compressed_state_path):
                 if 'PONG' in terminal_text:
                     pong_found = True
                     print(f"   PING command successful - received PONG")
+                    tests_passed += 1
                     break
                     
             except Exception as e:
                 print(f"   Attempt {attempt + 1} error: {e}")
-        
+            
+            await asyncio.sleep(1) #wait before trying again
+
         if not pong_found:
-            print(f"   PING command failed - PONG not found in response after 10 seconds")
-            try:
-                # Get last few lines for debugging
-                debug_content = await page.evaluate('''() => {
-                    if (window.serialAdapter && window.serialAdapter.term) {
-                        const term = window.serialAdapter.term;
-                        const buffer = term.buffer.active;
-                        let text = '';
-                        const startLine = Math.max(0, buffer.length - 20);
-                        
-                        for (let i = startLine; i < buffer.length; i++) {
-                            const line = buffer.getLine(i);
-                            if (line) {
-                                text += line.translateToString(true) + '\\n';
-                            }
-                        }
-                        return text;
-                    }
-                    return 'Could not access terminal';
-                }''')
-                print(f"   Debug - Last 20 lines of terminal:")
-                print(f"   {debug_content}")
-            except Exception as e:
-                print(f"   Debug - Could not read terminal buffer: {e}")
-            all_tests_passed = False
+            print(f"   PING command failed - PONG not found in response after {RESPONSE_TIMEOUT} seconds")
             
     except Exception as e:
         print(f"   Failed to test PING command: {e}")
         import traceback
         traceback.print_exc()
-        all_tests_passed = False
     
     # Test 3: Check compressed state size
     print(f"\n3. Testing: Compressed state size is less than {MAX_STATE_SIZE_MB} MB")
@@ -149,25 +126,23 @@ async def test_basic_functionality(page, valkey_version, compressed_state_path):
             
             if file_size_mb < MAX_STATE_SIZE_MB:
                 print(f"   Compressed state size is {file_size_mb:.2f} MB (< {MAX_STATE_SIZE_MB} MB)")
+                tests_passed += 1
             else:
                 print(f"   Compressed state size is {file_size_mb:.2f} MB (>= {MAX_STATE_SIZE_MB} MB)")
-                all_tests_passed = False
         else:
             print(f"   Compressed state file not found: {compressed_state_path}")
-            all_tests_passed = False
     except Exception as e:
         print(f"   Failed to check state size: {e}")
-        all_tests_passed = False
     
     # Summary
     print("\n" + "="*50)
-    if all_tests_passed:
+    if tests_passed == TOTAL_TESTS:
         print("All tests passed!")
     else:
-        print("Some tests failed!")
+        print(f"Some tests failed! ({tests_passed}/{TOTAL_TESTS} passed)")
     print("="*50 + "\n")
     
-    return all_tests_passed
+    return tests_passed == TOTAL_TESTS
 
 async def automate_state_save(valkey_version):
     """Main automation function"""
@@ -225,6 +200,7 @@ async def automate_state_save(valkey_version):
             print(f"State compressed: {compressed_path}")
             
             # Run tests BEFORE closing browser
+            # Run the tests AFTER saving the state so test commands don't appear in the saved snapshot, and to be able to check saved state size.
             tests_passed = await test_basic_functionality(page, valkey_version, compressed_path)
             
             if not tests_passed:
